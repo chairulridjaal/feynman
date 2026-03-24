@@ -1,6 +1,6 @@
 {
   "name": "@companion-ai/feynman",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Research-first CLI agent built on Pi and alphaXiv",
   "type": "module",
   "engines": {
