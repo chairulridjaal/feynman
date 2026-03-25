@@ -5,4 +5,5 @@ if (v[0] < 20) {
   console.error("upgrade: https://nodejs.org or nvm install 20");
   process.exit(1);
 }
-import("../dist/index.js");
+await import("../scripts/patch-embedded-pi.mjs");
+await import("../dist/index.js");

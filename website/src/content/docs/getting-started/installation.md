@@ -1,11 +1,11 @@
 ---
 title: Installation
-description: Install Feynman on macOS, Linux, or Windows using the one-line installer or npm.
+description: Install Feynman on macOS, Linux, or Windows using curl, pnpm, or bun.
 section: Getting Started
 order: 1
 ---
 
-Feynman ships as a standalone runtime bundle for macOS, Linux, and Windows, and as an npm package for environments where Node.js is already installed. The recommended approach is the one-line installer, which downloads a prebuilt native bundle with zero external runtime dependencies.
+Feynman ships as a standalone runtime bundle for macOS, Linux, and Windows, and as a package-manager install for environments where Node.js is already installed. The recommended approach is the one-line installer, which downloads a prebuilt native bundle with zero external runtime dependencies.
 
 ## One-line installer (recommended)
 
@@ -25,15 +25,9 @@ irm https://feynman.is/install.ps1 | iex
 
 This installs the Windows runtime bundle under `%LOCALAPPDATA%\Programs\feynman`, adds its launcher to your user `PATH`, and lets you re-run the installer at any time to update.
 
-## npm / npx
+## pnpm / bun
 
-If you already have Node.js 20.18.1+ installed, you can install Feynman globally via npm:
-
-```bash
-npm install -g @companion-ai/feynman
-```
-
-`pnpm` and `bun` are supported as well:
+If you already have Node.js 20.18.1+ installed, you can install Feynman globally via `pnpm` or `bun`:
 
 ```bash
 pnpm add -g @companion-ai/feynman
@@ -43,15 +37,11 @@ bun add -g @companion-ai/feynman
 Or run it directly without installing:
 
 ```bash
-npx @companion-ai/feynman
-```
-
-```bash
 pnpm dlx @companion-ai/feynman
 bunx @companion-ai/feynman
 ```
 
-The npm distribution ships the same core application but depends on Node.js being present on your system. The standalone installer is preferred because it bundles its own Node runtime and works without a separate Node installation.
+The package-manager distribution ships the same core application but depends on Node.js being present on your system. The standalone installer is preferred because it bundles its own Node runtime and works without a separate Node installation.
 
 ## Post-install setup
 
@@ -80,6 +70,6 @@ For contributing or running Feynman from source:
 ```bash
 git clone https://github.com/getcompanion-ai/feynman.git
 cd feynman
-npm install
-npm run start
+pnpm install
+pnpm start
 ```

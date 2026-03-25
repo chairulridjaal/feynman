@@ -6,7 +6,6 @@
 <p align="center">The open source AI research agent.</p>
 <p align="center">
   <a href="https://feynman.is/docs"><img alt="Docs" src="https://img.shields.io/badge/docs-feynman.is-0d9668?style=flat-square" /></a>
-  <a href="https://www.npmjs.com/package/@companion-ai/feynman"><img alt="npm" src="https://img.shields.io/npm/v/@companion-ai/feynman?style=flat-square" /></a>
   <a href="https://github.com/getcompanion-ai/feynman/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/getcompanion-ai/feynman?style=flat-square" /></a>
 </p>
 
@@ -16,21 +15,10 @@
 
 ```bash
 curl -fsSL https://feynman.is/install | bash
-```
 
-```powershell
-# Windows
-irm https://feynman.is/install.ps1 | iex
-```
-
-```bash
-# npm fallback
-npm install -g @companion-ai/feynman
-
-# pnpm fallback
+# package manager fallback
 pnpm add -g @companion-ai/feynman
 
-# bun fallback
 bun add -g @companion-ai/feynman
 ```
 
@@ -108,7 +96,7 @@ Built on [Pi](https://github.com/badlogic/pi-mono) for the agent runtime, [alpha
 
 ```bash
 git clone https://github.com/getcompanion-ai/feynman.git
-cd feynman && npm install && npm run start
+cd feynman && pnpm install && pnpm start
 ```
 
 [Docs](https://feynman.is/docs) · [MIT License](LICENSE)

@@ -34,7 +34,6 @@
     "build:native-bundle": "node ./scripts/build-native-bundle.mjs",
     "dev": "tsx src/index.ts",
     "prepack": "node ./scripts/prepare-runtime-workspace.mjs",
-    "postinstall": "node ./scripts/patch-embedded-pi.mjs",
     "start": "tsx src/index.ts",
     "start:dist": "node ./bin/feynman.js",
     "test": "node --import tsx --test --test-concurrency=1 tests/*.test.ts",

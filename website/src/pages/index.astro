@@ -36,6 +36,12 @@ const terminalCommands = [
   { command: "feynman audit 2401.12345", description: "Paper claims vs. what the code actually does" },
   { command: 'feynman replicate "chain-of-thought improves math"', description: "Replication plan, compute target, experiment execution" },
 ]
+
+const installCommands = [
+  { label: "curl", command: "curl -fsSL https://feynman.is/install | bash" },
+  { label: "pnpm", command: "pnpm add -g @companion-ai/feynman" },
+  { label: "bun", command: "bun add -g @companion-ai/feynman" },
+]
 ---
 
 <Layout title="Feynman — The open source AI research agent" active="home">
@@ -51,15 +57,23 @@ const terminalCommands = [
         </p>
       </div>
 
-      <div class="flex flex-col items-center gap-4">
-        <button
-          id="install-cmd"
-          class="group flex items-center gap-3 rounded-lg bg-muted px-4 py-2.5 font-mono text-sm transition-colors hover:bg-muted/80 cursor-pointer"
-        >
-          <span>curl -fsSL https://feynman.is/install | bash</span>
-          <svg id="copy-icon" class="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          <svg id="check-icon" class="hidden size-4 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-        </button>
+      <div class="flex w-full max-w-3xl flex-col items-center gap-4">
+        <div class="grid w-full gap-3 sm:grid-cols-3">
+          {installCommands.map((entry) => (
+            <button
+              class="install-cmd group flex items-center justify-between gap-3 rounded-lg bg-muted px-4 py-3 text-left font-mono text-sm transition-colors hover:bg-muted/80 cursor-pointer"
+              data-command={entry.command}
+              aria-label={`Copy ${entry.label} install command`}
+            >
+              <div class="flex min-w-0 flex-col">
+                <span class="text-xs uppercase tracking-[0.2em] text-muted-foreground">{entry.label}</span>
+                <span class="truncate">{entry.command}</span>
+              </div>
+              <span class="install-copy shrink-0 text-muted-foreground transition-colors group-hover:text-foreground">Copy</span>
+              <span class="install-check hidden shrink-0 text-primary">Copied</span>
+            </button>
+          ))}
+        </div>
 
         <div class="flex items-center gap-3">
           <a href="/docs/getting-started/installation">
@@ -198,22 +212,25 @@ const terminalCommands = [
 
 <script is:inline>
   function initCopyBtn() {
-    var btn = document.getElementById("install-cmd")
-    if (btn && !btn._bound) {
+    document.querySelectorAll(".install-cmd").forEach(function (btn) {
+      if (btn._bound) return
       btn._bound = true
       btn.addEventListener("click", function () {
-        navigator.clipboard.writeText("curl -fsSL https://feynman.is/install | bash").then(function () {
-          var copyIcon = document.getElementById("copy-icon")
-          var checkIcon = document.getElementById("check-icon")
-          copyIcon.classList.add("hidden")
-          checkIcon.classList.remove("hidden")
+        var command = btn.getAttribute("data-command")
+        if (!command) return
+        navigator.clipboard.writeText(command).then(function () {
+          var copyLabel = btn.querySelector(".install-copy")
+          var checkLabel = btn.querySelector(".install-check")
+          if (!copyLabel || !checkLabel) return
+          copyLabel.classList.add("hidden")
+          checkLabel.classList.remove("hidden")
           setTimeout(function () {
-            copyIcon.classList.remove("hidden")
-            checkIcon.classList.add("hidden")
+            copyLabel.classList.remove("hidden")
+            checkLabel.classList.add("hidden")
           }, 2000)
         })
       })
-    }
+    })
   }
   initCopyBtn()
   document.addEventListener("astro:after-swap", initCopyBtn)

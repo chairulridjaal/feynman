@@ -232,7 +232,6 @@ This usually means the release exists, but not all platform bundles were uploade
 
 Workarounds:
   - try again after the release finishes publishing
-  - install via npm instead: npm install -g @companion-ai/feynman
   - install via pnpm instead: pnpm add -g @companion-ai/feynman
   - install via bun instead: bun add -g @companion-ai/feynman
 EOF
