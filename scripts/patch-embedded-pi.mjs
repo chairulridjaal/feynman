@@ -51,6 +51,7 @@ const cliPath = piPackageRoot ? resolve(piPackageRoot, "dist", "cli.js") : null;
 const bunCliPath = piPackageRoot ? resolve(piPackageRoot, "dist", "bun", "cli.js") : null;
 const interactiveModePath = piPackageRoot ? resolve(piPackageRoot, "dist", "modes", "interactive", "interactive-mode.js") : null;
 const interactiveThemePath = piPackageRoot ? resolve(piPackageRoot, "dist", "modes", "interactive", "theme", "theme.js") : null;
+const terminalPath = piTuiRoot ? resolve(piTuiRoot, "dist", "terminal.js") : null;
 const editorPath = piTuiRoot ? resolve(piTuiRoot, "dist", "components", "editor.js") : null;
 const workspaceRoot = resolve(appRoot, ".feynman", "npm", "node_modules");
 const webAccessPath = resolve(workspaceRoot, "pi-web-access", "index.ts");
@@ -247,10 +248,68 @@ for (const entryPath of [cliPath, bunCliPath].filter(Boolean)) {
 		continue;
 	}
 
-	const cliSource = readFileSync(entryPath, "utf8");
+	let cliSource = readFileSync(entryPath, "utf8");
 	if (cliSource.includes('process.title = "pi";')) {
-		writeFileSync(entryPath, cliSource.replace('process.title = "pi";', 'process.title = "feynman";'), "utf8");
+		cliSource = cliSource.replace('process.title = "pi";', 'process.title = "feynman";');
 	}
+	const stdinErrorGuard = [
+		"const feynmanHandleStdinError = (error) => {",
+		'    if (error && typeof error === "object") {',
+		'        const code = "code" in error ? error.code : undefined;',
+		'        const syscall = "syscall" in error ? error.syscall : undefined;',
+		'        if ((code === "EIO" || code === "EBADF") && syscall === "read") {',
+		"            return;",
+		"        }",
+		"    }",
+		"};",
+		'process.stdin?.on?.("error", feynmanHandleStdinError);',
+	].join("\n");
+	if (!cliSource.includes('process.stdin?.on?.("error", feynmanHandleStdinError);')) {
+		cliSource = cliSource.replace(
+			'process.emitWarning = (() => { });',
+			`process.emitWarning = (() => { });\n${stdinErrorGuard}`,
+		);
+	}
+	writeFileSync(entryPath, cliSource, "utf8");
+}
+
+if (terminalPath && existsSync(terminalPath)) {
+	let terminalSource = readFileSync(terminalPath, "utf8");
+	if (!terminalSource.includes("stdinErrorHandler;")) {
+		terminalSource = terminalSource.replace(
+			"    stdinBuffer;\n    stdinDataHandler;\n",
+			[
+				"    stdinBuffer;",
+				"    stdinDataHandler;",
+				"    stdinErrorHandler = (error) => {",
+				'        if ((error?.code === "EIO" || error?.code === "EBADF") && error?.syscall === "read") {',
+				"            return;",
+				"        }",
+				"    };",
+			].join("\n") + "\n",
+		);
+	}
+	if (!terminalSource.includes('process.stdin.on("error", this.stdinErrorHandler);')) {
+		terminalSource = terminalSource.replace(
+			'        process.stdin.resume();\n',
+			'        process.stdin.resume();\n        process.stdin.on("error", this.stdinErrorHandler);\n',
+		);
+	}
+	if (!terminalSource.includes('            process.stdin.removeListener("error", this.stdinErrorHandler);')) {
+		terminalSource = terminalSource.replace(
+			'            process.stdin.removeListener("data", onData);\n            this.inputHandler = previousHandler;\n',
+			[
+				'            process.stdin.removeListener("data", onData);',
+				'            process.stdin.removeListener("error", this.stdinErrorHandler);',
+				'            this.inputHandler = previousHandler;',
+			].join("\n"),
+		);
+		terminalSource = terminalSource.replace(
+			'        process.stdin.pause();\n',
+			'        process.stdin.removeListener("error", this.stdinErrorHandler);\n        process.stdin.pause();\n',
+		);
+	}
+	writeFileSync(terminalPath, terminalSource, "utf8");
 }
 
 if (interactiveModePath && existsSync(interactiveModePath)) {

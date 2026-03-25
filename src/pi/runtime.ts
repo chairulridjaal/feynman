@@ -77,9 +77,12 @@ export function buildPiArgs(options: PiRuntimeOptions): string[] {
 
 export function buildPiEnv(options: PiRuntimeOptions): NodeJS.ProcessEnv {
 	const paths = resolvePiPaths(options.appRoot);
+	const feynmanHome = dirname(options.feynmanAgentDir);
+	const feynmanNpmPrefixPath = resolve(feynmanHome, "npm-global");
+	const feynmanNpmBinPath = resolve(feynmanNpmPrefixPath, "bin");
 
 	const currentPath = process.env.PATH ?? "";
-	const binEntries = [paths.nodeModulesBinPath, resolve(paths.piWorkspaceNodeModulesPath, ".bin")];
+	const binEntries = [paths.nodeModulesBinPath, resolve(paths.piWorkspaceNodeModulesPath, ".bin"), feynmanNpmBinPath];
 	const binPath = binEntries.join(":");
 
 	return {
@@ -90,11 +93,14 @@ export function buildPiEnv(options: PiRuntimeOptions): NodeJS.ProcessEnv {
 		FEYNMAN_MEMORY_DIR: resolve(dirname(options.feynmanAgentDir), "memory"),
 		FEYNMAN_NODE_EXECUTABLE: process.execPath,
 		FEYNMAN_BIN_PATH: resolve(options.appRoot, "bin", "feynman.js"),
+		FEYNMAN_NPM_PREFIX: feynmanNpmPrefixPath,
 		PANDOC_PATH: process.env.PANDOC_PATH ?? resolveExecutable("pandoc", PANDOC_FALLBACK_PATHS),
 		PI_HARDWARE_CURSOR: process.env.PI_HARDWARE_CURSOR ?? "1",
 		PI_SKIP_VERSION_CHECK: process.env.PI_SKIP_VERSION_CHECK ?? "1",
 		MERMAID_CLI_PATH: process.env.MERMAID_CLI_PATH ?? resolveExecutable("mmdc", MERMAID_FALLBACK_PATHS),
 		PUPPETEER_EXECUTABLE_PATH:
 			process.env.PUPPETEER_EXECUTABLE_PATH ?? resolveExecutable("google-chrome", BROWSER_FALLBACK_PATHS),
+		NPM_CONFIG_PREFIX: process.env.NPM_CONFIG_PREFIX ?? feynmanNpmPrefixPath,
+		npm_config_prefix: process.env.npm_config_prefix ?? feynmanNpmPrefixPath,
 	};
 }

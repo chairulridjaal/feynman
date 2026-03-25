@@ -41,7 +41,14 @@ test("buildPiEnv wires Feynman paths into the Pi environment", () => {
 	assert.equal(env.FEYNMAN_SESSION_DIR, "/sessions");
 	assert.equal(env.FEYNMAN_BIN_PATH, "/repo/feynman/bin/feynman.js");
 	assert.equal(env.FEYNMAN_MEMORY_DIR, "/home/.feynman/memory");
-	assert.ok(env.PATH?.startsWith("/repo/feynman/node_modules/.bin:/repo/feynman/.feynman/npm/node_modules/.bin:"));
+	assert.equal(env.FEYNMAN_NPM_PREFIX, "/home/.feynman/npm-global");
+	assert.equal(env.NPM_CONFIG_PREFIX, "/home/.feynman/npm-global");
+	assert.equal(env.npm_config_prefix, "/home/.feynman/npm-global");
+	assert.ok(
+		env.PATH?.startsWith(
+			"/repo/feynman/node_modules/.bin:/repo/feynman/.feynman/npm/node_modules/.bin:/home/.feynman/npm-global/bin:",
+		),
+	);
 });
 
 test("resolvePiPaths includes the Promise.withResolvers polyfill path", () => {
