@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FEYNMAN_LOGO_HTML } from "../logo.mjs";
@@ -9,6 +10,14 @@ import { PI_SUBAGENTS_PATCH_TARGETS, patchPiSubagentsSource } from "./lib/pi-sub
 
 const here = dirname(fileURLToPath(import.meta.url));
 const appRoot = resolve(here, "..");
+
+// Set npm global prefix early to ensure all npm commands use the correct path.
+const feynmanHome = resolve(process.env.FEYNMAN_HOME ?? homedir(), ".feynman");
+const feynmanNpmPrefix = resolve(feynmanHome, "npm-global");
+process.env.FEYNMAN_NPM_PREFIX = feynmanNpmPrefix;
+process.env.NPM_CONFIG_PREFIX = feynmanNpmPrefix;
+process.env.npm_config_prefix = feynmanNpmPrefix;
+
 const appRequire = createRequire(resolve(appRoot, "package.json"));
 const isGlobalInstall = process.env.npm_config_global === "true" || process.env.npm_config_location === "global";
 
@@ -76,7 +85,17 @@ const workspaceArchivePath = resolve(appRoot, ".feynman", "runtime-workspace.tgz
 function createInstallCommand(packageManager, packageSpecs) {
 	switch (packageManager) {
 		case "npm":
-			return ["install", "--prefer-offline", "--no-audit", "--no-fund", "--loglevel", "error", ...packageSpecs];
+			return [
+				"install",
+				"--global=false",
+				"--location=project",
+				"--prefer-offline",
+				"--no-audit",
+				"--no-fund",
+				"--loglevel",
+				"error",
+				...packageSpecs,
+			];
 		case "pnpm":
 			return ["add", "--prefer-offline", "--reporter", "silent", ...packageSpecs];
 		case "bun":
