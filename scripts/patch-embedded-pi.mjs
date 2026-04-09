@@ -6,6 +6,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FEYNMAN_LOGO_HTML } from "../logo.mjs";
 import { patchPiExtensionLoaderSource } from "./lib/pi-extension-loader-patch.mjs";
+import { patchPiGoogleLegacySchemaSource } from "./lib/pi-google-legacy-schema-patch.mjs";
 import { PI_WEB_ACCESS_PATCH_TARGETS, patchPiWebAccessSource } from "./lib/pi-web-access-patch.mjs";
 import { PI_SUBAGENTS_PATCH_TARGETS, patchPiSubagentsSource } from "./lib/pi-subagents-patch.mjs";
 
@@ -616,6 +617,7 @@ if (existsSync(sessionSearchIndexerPath)) {
 }
 
 const oauthPagePath = piAiRoot ? resolve(piAiRoot, "dist", "utils", "oauth", "oauth-page.js") : null;
+const googleSharedPath = piAiRoot ? resolve(piAiRoot, "dist", "providers", "google-shared.js") : null;
 
 if (oauthPagePath && existsSync(oauthPagePath)) {
 	let source = readFileSync(oauthPagePath, "utf8");
@@ -626,6 +628,14 @@ if (oauthPagePath && existsSync(oauthPagePath)) {
 		changed = true;
 	}
 	if (changed) writeFileSync(oauthPagePath, source, "utf8");
+}
+
+if (googleSharedPath && existsSync(googleSharedPath)) {
+	const source = readFileSync(googleSharedPath, "utf8");
+	const patched = patchPiGoogleLegacySchemaSource(source);
+	if (patched !== source) {
+		writeFileSync(googleSharedPath, patched, "utf8");
+	}
 }
 
 const alphaHubAuthPath = findPackageRoot("@companion-ai/alpha-hub")

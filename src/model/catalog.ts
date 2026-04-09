@@ -96,6 +96,14 @@ const RESEARCH_MODEL_PREFERENCES = [
 		reason: "good fallback when GLM is the available research model",
 	},
 	{
+		spec: "minimax/minimax-m2.7",
+		reason: "good fallback when MiniMax is the available research model",
+	},
+	{
+		spec: "minimax/minimax-m2.7-highspeed",
+		reason: "good fallback when MiniMax is the available research model",
+	},
+	{
 		spec: "kimi-coding/kimi-k2-thinking",
 		reason: "good fallback when Kimi is the available research model",
 	},

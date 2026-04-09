@@ -57,6 +57,16 @@ test("buildModelStatusSnapshotFromRecords flags an invalid current model and sug
 	assert.ok(snapshot.guidance.some((line) => line.includes("Configured default model is unavailable")));
 });
 
+test("chooseRecommendedModel prefers MiniMax M2.7 over highspeed when that is the authenticated provider", () => {
+	const authPath = createAuthPath({
+		minimax: { type: "api_key", key: "minimax-test-key" },
+	});
+
+	const recommendation = chooseRecommendedModel(authPath);
+
+	assert.equal(recommendation?.spec, "minimax/MiniMax-M2.7");
+});
+
 test("resolveInitialPrompt maps top-level research commands to Pi slash workflows", () => {
 	const workflows = new Set(["lit", "watch", "jobs", "deepresearch"]);
 	assert.equal(resolveInitialPrompt("lit", ["tool-using", "agents"], undefined, workflows), "/lit tool-using agents");
@@ -65,4 +75,3 @@ test("resolveInitialPrompt maps top-level research commands to Pi slash workflow
 	assert.equal(resolveInitialPrompt("chat", ["hello"], undefined, workflows), "hello");
 	assert.equal(resolveInitialPrompt("unknown", ["topic"], undefined, workflows), "unknown topic");
 });
-
