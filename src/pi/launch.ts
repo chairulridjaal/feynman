@@ -24,7 +24,7 @@ export async function launchPiChat(options: PiRuntimeOptions): Promise<void> {
 		throw new Error(`Promise polyfill not found: ${promisePolyfillPath}`);
 	}
 
-	if (process.stdout.isTTY) {
+	if (process.stdout.isTTY && options.mode !== "rpc") {
 		process.stdout.write("\x1b[2J\x1b[3J\x1b[H");
 	}
 

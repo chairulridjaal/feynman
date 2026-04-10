@@ -348,6 +348,7 @@ export async function main(): Promise<void> {
 			"alpha-login": { type: "boolean" },
 			"alpha-logout": { type: "boolean" },
 			"alpha-status": { type: "boolean" },
+			mode: { type: "string" },
 			model: { type: "string" },
 			"new-session": { type: "boolean" },
 			prompt: { type: "string" },
@@ -479,6 +480,10 @@ export async function main(): Promise<void> {
 
 	const explicitModelSpec = values.model ?? process.env.FEYNMAN_MODEL;
 	const explicitServiceTier = normalizeServiceTier(values["service-tier"] ?? process.env.FEYNMAN_SERVICE_TIER);
+	const mode = values.mode;
+	if (mode !== undefined && mode !== "text" && mode !== "json" && mode !== "rpc") {
+		throw new Error("Unknown mode. Use text, json, or rpc.");
+	}
 	if ((values["service-tier"] ?? process.env.FEYNMAN_SERVICE_TIER) && !explicitServiceTier) {
 		throw new Error("Unknown service tier. Use auto, default, flex, priority, or standard_only.");
 	}
@@ -515,6 +520,7 @@ export async function main(): Promise<void> {
 		sessionDir,
 		feynmanAgentDir,
 		feynmanVersion,
+		mode,
 		thinkingLevel,
 		explicitModelSpec,
 		oneShotPrompt: values.prompt,

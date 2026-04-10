@@ -15,6 +15,7 @@ export type PiRuntimeOptions = {
 	sessionDir: string;
 	feynmanAgentDir: string;
 	feynmanVersion?: string;
+	mode?: "text" | "json" | "rpc";
 	thinkingLevel?: string;
 	explicitModelSpec?: string;
 	oneShotPrompt?: string;
@@ -83,6 +84,9 @@ export function buildPiArgs(options: PiRuntimeOptions): string[] {
 		args.push("--system-prompt", readFileSync(paths.systemPromptPath, "utf8"));
 	}
 
+	if (options.mode) {
+		args.push("--mode", options.mode);
+	}
 	if (options.explicitModelSpec) {
 		args.push("--model", options.explicitModelSpec);
 	}
