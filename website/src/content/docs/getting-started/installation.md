@@ -35,23 +35,27 @@ To update the standalone Feynman app on macOS, Linux, or Windows, rerun the inst
 
 ## Uninstalling
 
-Feynman does not currently ship a dedicated `uninstall` command. Remove the standalone launcher and runtime bundle directly, then optionally remove the Feynman home directory if you also want to delete settings, auth, and sessions.
+Feynman does not currently ship a dedicated `uninstall` command. Remove the standalone launcher and runtime bundle directly, then optionally remove the Feynman home directory if you also want to delete settings, sessions, and installed package state. If you also want to clear alphaXiv login state, remove `~/.ahub`.
 
 On macOS or Linux:
 
 ```bash
 rm -f ~/.local/bin/feynman
 rm -rf ~/.local/share/feynman
-# optional: remove settings, auth, sessions, and installed package state
+# optional: remove settings, sessions, and installed package state
 rm -rf ~/.feynman
+# optional: remove alphaXiv auth state
+rm -rf ~/.ahub
 ```
 
 On Windows PowerShell:
 
 ```powershell
 Remove-Item "$env:LOCALAPPDATA\\Programs\\feynman" -Recurse -Force
-# optional: remove settings, auth, sessions, and installed package state
+# optional: remove settings, sessions, and installed package state
 Remove-Item "$HOME\\.feynman" -Recurse -Force
+# optional: remove alphaXiv auth state
+Remove-Item "$HOME\\.ahub" -Recurse -Force
 ```
 
 If you added the launcher directory to `PATH` manually, remove that entry as well.

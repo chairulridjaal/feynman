@@ -51,7 +51,7 @@ If `CHANGELOG.md` exists, read the most recent relevant entries before finalizin
 
 Also save the plan with `memory_remember` (type: `fact`, key: `deepresearch.<slug>.plan`) so it survives context truncation.
 
-Present the plan to the user, then continue automatically. Do not block the workflow waiting for approval. If the user actively asks for changes, revise the plan first before proceeding.
+Present the plan to the user. If this is an unattended or one-shot run, continue automatically. If the user is actively interacting in the terminal, give them a brief chance to request plan changes before proceeding.
 
 ## 2. Scale decision
 

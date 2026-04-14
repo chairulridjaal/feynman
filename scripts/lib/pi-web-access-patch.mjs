@@ -24,14 +24,16 @@ export function patchPiWebAccessSource(relativePath, source) {
 	}
 
 	if (relativePath === "index.ts") {
-		if (patched.includes('return "summary-review";')) {
-			patched = patched.replace('return "summary-review";', 'return "none";');
+		const workflowDefaultOriginal = 'const workflow = resolveWorkflow(params.workflow ?? configWorkflow, ctx?.hasUI !== false);';
+		const workflowDefaultPatched = 'const workflow = resolveWorkflow(params.workflow ?? configWorkflow ?? "none", ctx?.hasUI !== false);';
+		if (patched.includes(workflowDefaultOriginal)) {
+			patched = patched.replace(workflowDefaultOriginal, workflowDefaultPatched);
 			changed = true;
 		}
 		if (patched.includes('summary-review = open curator with auto summary draft (default)')) {
 			patched = patched.replace(
 				'summary-review = open curator with auto summary draft (default)',
-				'summary-review = open curator with auto summary draft',
+				'summary-review = open curator with auto summary draft (opt-in)',
 			);
 			changed = true;
 		}
