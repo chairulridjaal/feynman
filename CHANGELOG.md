@@ -69,6 +69,24 @@ Use this file to track chronology, not release notes. Keep entries short, factua
 - Blockers: None.
 - Next: Optional only — produce a legal memorandum on the basis of Paris's capital status if requested.
 
+### 2026-04-14 12:00 local — capital-belgium
+
+- Objective: Run a deep-research workflow for the question "What is the capital of Belgium?"
+- Changed: Created plan artifact at `outputs/.plans/capital-belgium.md`; gathered evidence into `notes/capital-belgium-research-web.md` from Belgium.be, FPS Foreign Affairs, Britannica, and a Belgian Senate constitution check.
+- Verified: Found two explicit current Belgian government statements that Brussels is the federal capital of Belgium, plus independent Britannica corroboration; no conflicting nuance surfaced in the consulted legal text.
+- Failed / learned: This is narrow enough that researcher subagents would add overhead without increasing evidence quality.
+- Blockers: Need draft, citation/URL verification pass, final review pass, and promotion.
+- Next: Draft the brief, run verifier-equivalent and reviewer passes, then promote final output with provenance.
+
+### 2026-04-14 12:25 local — capital-belgium
+
+- Objective: Complete citation, verification, and final promotion for the capital-of-Belgium workflow.
+- Changed: Wrote `outputs/.drafts/capital-belgium-draft.md`; produced cited brief `outputs/capital-belgium-brief.md`; ran verification into `notes/capital-belgium-verification.md`; promoted final output to `outputs/capital-belgium.md`; wrote `outputs/capital-belgium.provenance.md`; updated the plan ledger and verification log.
+- Verified: Core claim is now backed by Belgium.be, Belgian Foreign Affairs, Britannica, and direct constitutional text from Senate-hosted Article 194 stating that Brussels is the capital of Belgium and the seat of the federal government.
+- Failed / learned: The runtime did not expose a named `verifier` subagent, so a worker performed a verifier-equivalent citation/URL check; reviewer surfaced a stronger constitutional source than the first draft had emphasized.
+- Blockers: None.
+- Next: Optional only — if requested, expand this into a legal-historical note on Brussels’s capital status and the distinction between city, region, and federal institutions.
+
 ### 2026-03-25 00:00 local — scaling-laws
 
 - Objective: Set up a deep research workflow for scaling laws.
