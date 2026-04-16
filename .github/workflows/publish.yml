@@ -5,54 +5,93 @@ env:
 
 on:
   push:
-    branches: [main]
+    tags:
+      - "v*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing git tag to publish and release (for example: v0.2.18)
+        required: true
+        type: string
 
 jobs:
-  version-check:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      should_release: ${{ steps.version.outputs.should_release }}
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 24.14.0
-      - id: version
+      - name: Resolve release metadata
+        id: meta
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          LOCAL=$(node -p "require('./package.json').version")
-          echo "version=$LOCAL" >> "$GITHUB_OUTPUT"
-          if gh release view "v$LOCAL" >/dev/null 2>&1; then
-            echo "should_release=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_release=true" >> "$GITHUB_OUTPUT"
-          fi
+          TAG="${INPUT_TAG:-$REF_NAME}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ steps.meta.outputs.tag }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+      - run: npm ci
+      - name: Verify package version matches tag
+        shell: bash
+        run: |
+          ACTUAL="$(node -p "require('./package.json').version")"
+          EXPECTED="${{ steps.meta.outputs.version }}"
+          test "$ACTUAL" = "$EXPECTED"
+      - run: npm test
+      - run: npm pack
+
+  publish-npm:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ needs.verify.outputs.tag }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+      - run: npm ci
+      - run: npm publish --provenance --access public
 
   build-native-bundles:
-    needs: version-check
-    if: needs.version-check.outputs.should_release == 'true'
+    needs: verify
     strategy:
       fail-fast: false
       matrix:
         include:
           - id: linux-x64
-            os: blacksmith-4vcpu-ubuntu-2404
+            os: ubuntu-latest
           - id: darwin-x64
             os: macos-15-intel
           - id: darwin-arm64
             os: macos-14
           - id: win32-x64
-            os: blacksmith-4vcpu-windows-2025
+            os: windows-latest
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v5
         with:
-          node-version: 24.14.0
+          ref: refs/tags/${{ needs.verify.outputs.tag }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
       - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm run build:native-bundle
@@ -82,10 +121,9 @@ jobs:
 
   release-github:
     needs:
-      - version-check
+      - publish-npm
       - build-native-bundles
-    if: needs.version-check.outputs.should_release == 'true' && needs.build-native-bundles.result == 'success'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
@@ -93,22 +131,22 @@ jobs:
         with:
           path: release-assets
           merge-multiple: true
-      - shell: bash
+      - name: Create GitHub release
+        shell: bash
         env:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ needs.version-check.outputs.version }}
+          TAG: ${{ needs.verify.outputs.tag }}
         run: |
-          if gh release view "v$VERSION" >/dev/null 2>&1; then
-            gh release upload "v$VERSION" release-assets/* --clobber
-            gh release edit "v$VERSION" \
-              --title "v$VERSION" \
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release-assets/* --clobber
+            gh release edit "$TAG" \
+              --title "$TAG" \
               --notes "Standalone Feynman bundles for native installation." \
               --draft=false \
-              --target "$GITHUB_SHA"
+              --latest
           else
-            gh release create "v$VERSION" release-assets/* \
-              --title "v$VERSION" \
-              --notes "Standalone Feynman bundles for native installation." \
-              --target "$GITHUB_SHA"
+            gh release create "$TAG" release-assets/* \
+              --title "$TAG" \
+              --notes "Standalone Feynman bundles for native installation."
           fi
