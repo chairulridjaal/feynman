@@ -141,6 +141,74 @@ test("patchPiSubagentsSource rewrites modern agents.ts discovery paths", () => {
 	assert.ok(!patched.includes('fs.existsSync(userDirNew) ? userDirNew : userDirOld'));
 });
 
+test("patchPiSubagentsSource preserves output on top-level parallel tasks", () => {
+	const input = [
+		"interface TaskParam {",
+		"\tagent: string;",
+		"\ttask: string;",
+		"\tcwd?: string;",
+		"\tcount?: number;",
+		"\tmodel?: string;",
+		"\tskill?: string | string[] | boolean;",
+		"}",
+		"function run(params: { tasks: TaskParam[] }) {",
+		"\tconst modelOverrides = params.tasks.map(() => undefined);",
+		"\tconst skillOverrides = params.tasks.map(() => undefined);",
+		"\tconst parallelTasks = params.tasks.map((task, index) => ({",
+		"\t\tagent: task.agent,",
+		"\t\ttask: params.context === \"fork\" ? wrapForkTask(task.task) : task.task,",
+		"\t\tcwd: task.cwd,",
+		"\t\t...(modelOverrides[index] ? { model: modelOverrides[index] } : {}),",
+		"\t\t...(skillOverrides[index] !== undefined ? { skill: skillOverrides[index] } : {}),",
+		"\t}));",
+		"}",
+	].join("\n");
+
+	const patched = patchPiSubagentsSource("subagent-executor.ts", input);
+
+	assert.match(patched, /output\?: string \| false;/);
+	assert.match(patched, /\n\t\toutput: task\.output,/);
+	assert.doesNotMatch(patched, /resolvePiAgentDir/);
+});
+
+test("patchPiSubagentsSource documents output in top-level task schema", () => {
+	const input = [
+		"export const TaskItem = Type.Object({ ",
+		"\tagent: Type.String(), ",
+		"\ttask: Type.String(), ",
+		"\tcwd: Type.Optional(Type.String()),",
+		"\tcount: Type.Optional(Type.Integer({ minimum: 1, description: \"Repeat this parallel task N times with the same settings.\" })),",
+		"\tmodel: Type.Optional(Type.String({ description: \"Override model for this task (e.g. 'google/gemini-3-pro')\" })),",
+		"\tskill: Type.Optional(SkillOverride),",
+		"});",
+		"export const SubagentParams = Type.Object({",
+		"\ttasks: Type.Optional(Type.Array(TaskItem, { description: \"PARALLEL mode: [{agent, task, count?}, ...]\" })),",
+		"});",
+	].join("\n");
+
+	const patched = patchPiSubagentsSource("schemas.ts", input);
+
+	assert.match(patched, /output: Type\.Optional\(Type\.Any/);
+	assert.match(patched, /count\?, output\?/);
+	assert.doesNotMatch(patched, /resolvePiAgentDir/);
+});
+
+test("patchPiSubagentsSource documents output in top-level parallel help", () => {
+	const input = [
+		'import * as os from "node:os";',
+		'import * as path from "node:path";',
+		"const help = `",
+		"• PARALLEL: { tasks: [{agent,task,count?}, ...], concurrency?: number, worktree?: true } - concurrent execution (worktree: isolate each task in a git worktree)",
+		"`;",
+	].join("\n");
+
+	const patched = patchPiSubagentsSource("index.ts", input);
+
+	assert.match(patched, /output\?/);
+	assert.match(patched, /per-task file target/);
+	assert.doesNotMatch(patched, /function resolvePiAgentDir/);
+});
+
 test("stripPiSubagentBuiltinModelSource removes built-in model pins", () => {
 	const input = [
 		"---",

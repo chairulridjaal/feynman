@@ -5,6 +5,8 @@ export const PI_SUBAGENTS_PATCH_TARGETS = [
 	"run-history.ts",
 	"skills.ts",
 	"chain-clarify.ts",
+	"subagent-executor.ts",
+	"schemas.ts",
 ];
 
 const RESOLVE_PI_AGENT_DIR_HELPER = [
@@ -93,6 +95,11 @@ export function patchPiSubagentsSource(relativePath, source) {
 				patched,
 				'const configPath = path.join(os.homedir(), ".pi", "agent", "extensions", "subagent", "config.json");',
 				'const configPath = path.join(resolvePiAgentDir(), "extensions", "subagent", "config.json");',
+			);
+			patched = replaceAll(
+				patched,
+				"• PARALLEL: { tasks: [{agent,task,count?}, ...], concurrency?: number, worktree?: true } - concurrent execution (worktree: isolate each task in a git worktree)",
+				"• PARALLEL: { tasks: [{agent,task,count?,output?}, ...], concurrency?: number, worktree?: true } - concurrent execution (output: per-task file target, worktree: isolate each task in a git worktree)",
 			);
 			break;
 		case "agents.ts":
@@ -190,6 +197,69 @@ export function patchPiSubagentsSource(relativePath, source) {
 				'const dir = path.join(resolvePiAgentDir(), "agents");',
 			);
 			break;
+		case "subagent-executor.ts":
+			patched = replaceAll(
+				patched,
+				[
+					"\tcwd?: string;",
+					"\tcount?: number;",
+					"\tmodel?: string;",
+					"\tskill?: string | string[] | boolean;",
+				].join("\n"),
+				[
+					"\tcwd?: string;",
+					"\tcount?: number;",
+					"\tmodel?: string;",
+					"\tskill?: string | string[] | boolean;",
+					"\toutput?: string | false;",
+				].join("\n"),
+			);
+			patched = replaceAll(
+				patched,
+				[
+					"\t\t\tcwd: task.cwd,",
+					"\t\t\t...(modelOverrides[index] ? { model: modelOverrides[index] } : {}),",
+				].join("\n"),
+				[
+					"\t\t\tcwd: task.cwd,",
+					"\t\t\toutput: task.output,",
+					"\t\t\t...(modelOverrides[index] ? { model: modelOverrides[index] } : {}),",
+				].join("\n"),
+			);
+			patched = replaceAll(
+				patched,
+				[
+					"\t\tcwd: task.cwd,",
+					"\t\t...(modelOverrides[index] ? { model: modelOverrides[index] } : {}),",
+				].join("\n"),
+				[
+					"\t\tcwd: task.cwd,",
+					"\t\toutput: task.output,",
+					"\t\t...(modelOverrides[index] ? { model: modelOverrides[index] } : {}),",
+				].join("\n"),
+			);
+			break;
+		case "schemas.ts":
+			patched = replaceAll(
+				patched,
+				[
+					"\tcwd: Type.Optional(Type.String()),",
+					'\tcount: Type.Optional(Type.Integer({ minimum: 1, description: "Repeat this parallel task N times with the same settings." })),',
+					'\tmodel: Type.Optional(Type.String({ description: "Override model for this task (e.g. \'google/gemini-3-pro\')" })),',
+				].join("\n"),
+				[
+					"\tcwd: Type.Optional(Type.String()),",
+					'\tcount: Type.Optional(Type.Integer({ minimum: 1, description: "Repeat this parallel task N times with the same settings." })),',
+					'\toutput: Type.Optional(Type.Any({ description: "Output file for this parallel task (string), or false to disable. Relative paths resolve against cwd." })),',
+					'\tmodel: Type.Optional(Type.String({ description: "Override model for this task (e.g. \'google/gemini-3-pro\')" })),',
+				].join("\n"),
+			);
+			patched = replaceAll(
+				patched,
+				'tasks: Type.Optional(Type.Array(TaskItem, { description: "PARALLEL mode: [{agent, task, count?}, ...]" })),',
+				'tasks: Type.Optional(Type.Array(TaskItem, { description: "PARALLEL mode: [{agent, task, count?, output?}, ...]" })),',
+			);
+			break;
 		default:
 			return source;
 	}
@@ -198,5 +268,5 @@ export function patchPiSubagentsSource(relativePath, source) {
 		return source;
 	}
 
-	return injectResolvePiAgentDirHelper(patched);
+	return patched.includes("resolvePiAgentDir()") ? injectResolvePiAgentDirHelper(patched) : patched;
 }
