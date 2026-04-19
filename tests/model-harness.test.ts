@@ -138,13 +138,30 @@ test("buildModelStatusSnapshotFromRecords flags an invalid current model and sug
 });
 
 test("chooseRecommendedModel prefers MiniMax M2.7 over highspeed when that is the authenticated provider", () => {
-	const authPath = createAuthPath({
-		minimax: { type: "api_key", key: "minimax-test-key" },
-	});
+	const envKeys = ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY"];
+	const savedEnv = Object.fromEntries(envKeys.map((key) => [key, process.env[key]]));
 
-	const recommendation = chooseRecommendedModel(authPath);
+	for (const key of envKeys) {
+		delete process.env[key];
+	}
 
-	assert.equal(recommendation?.spec, "minimax/MiniMax-M2.7");
+	try {
+		const authPath = createAuthPath({
+			minimax: { type: "api_key", key: "minimax-test-key" },
+		});
+
+		const recommendation = chooseRecommendedModel(authPath);
+
+		assert.equal(recommendation?.spec, "minimax/MiniMax-M2.7");
+	} finally {
+		for (const [key, value] of Object.entries(savedEnv)) {
+			if (value === undefined) {
+				delete process.env[key];
+			} else {
+				process.env[key] = value;
+			}
+		}
+	}
 });
 
 test("resolveInitialPrompt maps top-level research commands to Pi slash workflows", () => {

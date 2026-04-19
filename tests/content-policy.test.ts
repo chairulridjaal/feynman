@@ -91,6 +91,21 @@ test("deepresearch citation and review stages are sequential and avoid giant edi
 	assert.match(deepResearchPrompt, /The final candidate is `outputs\/\.drafts\/<slug>-revised\.md` if it exists/i);
 });
 
+test("deepresearch requires post-edit verification before claiming fixes landed", () => {
+	const systemPrompt = readFileSync(join(repoRoot, ".feynman", "SYSTEM.md"), "utf8");
+	const deepResearchPrompt = readFileSync(join(repoRoot, "prompts", "deepresearch.md"), "utf8");
+
+	assert.match(systemPrompt, /Do not say a file edit, patch, correction, or reviewer fix was applied/i);
+	assert.match(systemPrompt, /write\/edit tool succeeded/i);
+	assert.match(systemPrompt, /old unsupported content is gone and the corrected content exists/i);
+
+	assert.match(deepResearchPrompt, /After applying reviewer, verifier, audit, or PI-style fixes/i);
+	assert.match(deepResearchPrompt, /run an explicit on-disk verification/i);
+	assert.match(deepResearchPrompt, /If an `edit` or `write` tool call fails, do not describe the fix as applied/i);
+	assert.match(deepResearchPrompt, /Provenance may only say an issue was fixed when this post-edit verification passed/i);
+	assert.match(deepResearchPrompt, /verify that any fixes claimed in the provenance are reflected in the final candidate/i);
+});
+
 test("deepresearch keeps subagent tool calls small and skips subagents for narrow explainers", () => {
 	const deepResearchPrompt = readFileSync(join(repoRoot, "prompts", "deepresearch.md"), "utf8");
 

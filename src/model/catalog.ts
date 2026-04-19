@@ -97,11 +97,11 @@ const RESEARCH_MODEL_PREFERENCES = [
 		reason: "good fallback when GLM is the available research model",
 	},
 	{
-		spec: "minimax/minimax-m2.7",
+		spec: "minimax/MiniMax-M2.7",
 		reason: "good fallback when MiniMax is the available research model",
 	},
 	{
-		spec: "minimax/minimax-m2.7-highspeed",
+		spec: "minimax/MiniMax-M2.7-highspeed",
 		reason: "good fallback when MiniMax is the available research model",
 	},
 	{

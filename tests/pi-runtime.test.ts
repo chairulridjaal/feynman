@@ -76,6 +76,28 @@ test("buildPiEnv wires Feynman paths into the Pi environment", () => {
 	}
 });
 
+test("buildPiEnv uses pre-resolved executable paths when provided", () => {
+	const paths = resolvePiPaths("/repo/feynman");
+	const env = buildPiEnv(
+		{
+			appRoot: "/repo/feynman",
+			workingDir: "/workspace",
+			sessionDir: "/sessions",
+			feynmanAgentDir: "/home/.feynman/agent",
+		},
+		paths,
+		{
+			pandoc: "/opt/test/bin/pandoc",
+			mermaid: "/opt/test/bin/mmdc",
+			browser: "/opt/test/bin/chrome",
+		},
+	);
+
+	assert.equal(env.PANDOC_PATH, "/opt/test/bin/pandoc");
+	assert.equal(env.MERMAID_CLI_PATH, "/opt/test/bin/mmdc");
+	assert.equal(env.PUPPETEER_EXECUTABLE_PATH, "/opt/test/bin/chrome");
+});
+
 test("applyFeynmanPackageManagerEnv pins npm globals to the Feynman prefix", () => {
 	const previousFeynmanPrefix = process.env.FEYNMAN_NPM_PREFIX;
 	const previousUppercasePrefix = process.env.NPM_CONFIG_PREFIX;

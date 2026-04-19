@@ -4,6 +4,7 @@ import { constants } from "node:os";
 
 import { buildPiArgs, buildPiEnv, type PiRuntimeOptions, resolvePiPaths, toNodeImportSpecifier } from "./runtime.js";
 import { ensureSupportedNodeVersion } from "../system/node-version.js";
+import { resolveAllExecutables } from "../system/executables.js";
 
 export function exitCodeFromSignal(signal: NodeJS.Signals): number {
 	const signalNumber = constants.signals[signal];
@@ -13,6 +14,7 @@ export function exitCodeFromSignal(signal: NodeJS.Signals): number {
 export async function launchPiChat(options: PiRuntimeOptions): Promise<void> {
 	ensureSupportedNodeVersion();
 
+	const paths = resolvePiPaths(options.appRoot);
 	const {
 		piCliPath,
 		piMainPath,
@@ -21,7 +23,7 @@ export async function launchPiChat(options: PiRuntimeOptions): Promise<void> {
 		promisePolyfillPath,
 		promisePolyfillSourcePath,
 		tsxLoaderPath,
-	} = resolvePiPaths(options.appRoot);
+	} = paths;
 	if (!existsSync(piCliPath)) {
 		throw new Error(`Pi CLI not found: ${piCliPath}`);
 	}
@@ -49,11 +51,12 @@ export async function launchPiChat(options: PiRuntimeOptions): Promise<void> {
 	const importArgs = useDevPolyfill
 		? ["--import", toNodeImportSpecifier(tsxLoaderPath), "--import", toNodeImportSpecifier(promisePolyfillSourcePath)]
 		: ["--import", toNodeImportSpecifier(promisePolyfillPath)];
+	const executables = await resolveAllExecutables();
 
-	const child = spawn(process.execPath, [...importArgs, wrapperPath, piMainPath, ...buildPiArgs(options)], {
+	const child = spawn(process.execPath, [...importArgs, wrapperPath, piMainPath, ...buildPiArgs(options, paths)], {
 		cwd: options.workingDir,
 		stdio: "inherit",
-		env: buildPiEnv(options),
+		env: buildPiEnv(options, paths, executables),
 	});
 
 	await new Promise<void>((resolvePromise, reject) => {
